@@ -1,0 +1,253 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/3/syntax.html
+file_extensions:
+  - bal
+scope: source.bal
+name: Ballerina
+contexts:
+  main:
+    - include: comments
+    - include: annotations
+    - include: package
+    - include: import
+    - include: code
+
+  package:
+    - match: '\bpackage\b'
+      scope: keyword.other.package.ballerina
+      push:
+        - meta_scope: meta.package.ballerina
+        - match: '[\w\.]+'
+          scope: support.other.package.ballerina
+        - match: ;
+          scope: punctuation.terminator.ballerina
+          pop: true
+        - match: (?=\n)
+          pop: true
+  import:
+    - match: \bimport\b
+      scope: keyword.other.import.ballerina
+      push:
+        - meta_scope: meta.import.ballerina
+        - match: \bstatic\b
+          scope: storage.modifier.static.ballerina
+          push:
+            - match: '[\w\.]+'
+              scope: support.function.import.ballerina
+            - match: (?=;)
+              pop: true
+            - match: (?=\n)
+              pop: true
+        - match: '[\w\.]+'
+          scope: support.service.import.ballerina
+        - match: ;
+          scope: punctuation.terminator.ballerina
+          pop: true
+        - match: (?=\n)
+          pop: true
+
+  comments-inline:
+    - match: /\*
+      scope: punctuation.definition.comment.ballerina
+      push:
+        - meta_scope: comment.block.ballerina
+        - match: \*/
+          scope: punctuation.definition.comment.ballerina
+          pop: true
+    - match: \s*((//).*$\n?)
+      captures:
+        1: comment.line.double-slash.ballerina
+        2: punctuation.definition.comment.ballerina
+
+  strings:
+    - match: '"'
+      scope: punctuation.definition.string.begin.ballerina
+      push:
+        - meta_scope: string.quoted.double.ballerina
+        - match: '"'
+          scope: punctuation.definition.string.end.ballerina
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.ballerina
+    - match: "'"
+      scope: punctuation.definition.string.begin.ballerina
+      push:
+        - meta_scope: string.quoted.single.ballerina
+        - match: "'"
+          scope: punctuation.definition.string.end.ballerina
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.ballerina
+
+  annotations:
+    - match: '(@[^(]+)(\()'
+      captures:
+        1: storage.type.annotation.ballerina
+        2: punctuation.definition.annotation-arguments.begin.ballerina
+      push:
+        - meta_scope: meta.declaration.annotation.ballerina
+        - match: '\)'
+          scope: punctuation.definition.annotation-arguments.end.ballerina
+          pop: true
+        - match: (\w*)\s*(=)
+          captures:
+            1: constant.other.key.ballerina
+            2: keyword.operator.assignment.ballerina
+        - include: code
+        - match: ","
+          scope: punctuation.separator.property.ballerina
+    - match: '@\w*'
+      scope: storage.type.annotation.ballerina
+
+  service:
+    - match: '(?=\w?[\w\s]*(?:service|(?:@)?resource|function|connector|action)\s+\w+)'
+      push:
+        - meta_scope: meta.service.ballerina
+        - match: "}"
+          scope: punctuation.section.service.end.ballerina
+          pop: true
+        - include: storage-modifiers
+        - include: comments
+        - match: (\bservice|(?:@)?\bresource|\bfunction|\bconnector|\baction)\s+(\w+)
+          scope: meta.service.identifier.ballerina
+          captures:
+            1: storage.modifier.ballerina
+            2: entity.name.service.ballerina
+        - match: "{"
+          push:
+            - meta_scope: meta.service.body.ballerina
+            - match: "(?=})"
+              pop: true
+            - include: service-declaration
+
+  service-declaration:
+    - meta_content_scope: meta.service.ballerina
+    - match: (\bservice\b)
+      captures:
+        1: storage.type.ballerina
+      set:
+        - match: '\w+'
+          scope: meta.service.identifier.ballerina entity.name.service.ballerina
+          set: service-declaration
+        - match: ''
+          set: service-declaration
+    - include: code
+
+  anonymous-create:
+    - match: \b(?<!::)create\b
+      scope: keyword.control.create.ballerina
+      push:
+        - match: '(?<=\)|\])(?!\s*{)|(?<=})|(?=;)'
+          pop: true
+        - match: '(\w+)\s*(?=\[)'
+          captures:
+            1: storage.type.ballerina
+          push:
+            - match: '}|(?=;|\))'
+              pop: true
+            - match: '\['
+              push:
+                - match: '\]'
+                  pop: true
+                - include: code
+            - match: "{"
+              push:
+                - match: "(?=})"
+                  pop: true
+                - include: code
+        - match: (?=\w.*(\(|$))
+          push:
+            - match: \)
+              pop: true
+            - include: object-types
+            - match: \(
+              push:
+                - match: (?=\))
+                  pop: true
+                - include: code
+        - match: "{"
+          push:
+            - meta_scope: meta.inner-service.ballerina
+            - match: "}"
+              pop: true
+            - include: service-declaration
+  keywords:
+    - match: \b(const)\b
+      scope: keyword.constant.ballerina
+    - match: \b(try|catch|throw)\b
+      scope: keyword.control.catch-exception.ballerina
+    - match: '\?|:'
+      scope: keyword.control.ballerina
+    - match: \b(return|reply|break|while|iterate|if|else|fork|join|timeout)\b
+      scope: keyword.control.ballerina
+    - match: (==|!=|<=|>=|<>|<|>)
+      scope: keyword.operator.comparison.ballerina
+    - match: (=)
+      scope: keyword.operator.assignment.ballerina
+      push:
+        - meta_scope: meta.assignment.rhs.ballerina
+        - match: (?=(;|\)))
+          pop: true
+        - include: code
+    - match: (\-\-|\+\+)
+      scope: keyword.operator.increment-decrement.ballerina
+    - match: (\-|\+|\*|\/|%)
+      scope: keyword.operator.arithmetic.ballerina
+    - match: (!|&&|\|\|)
+      scope: keyword.operator.logical.ballerina
+    - match: (?<=\S)\.(?=\S)
+      scope: keyword.operator.dereference.ballerina
+    - match: ;
+      scope: punctuation.terminator.ballerina
+  primitive-arrays:
+    - match: '\b(?:string|int)(\[\])*\b'
+      scope: storage.type.primitive.array.ballerina
+  primitive-types:
+    - match: \b(?:boolean|int|float|long|double|string)\b
+      scope: storage.type.primitive.ballerina
+  reference-types:
+    - match: \b(?:message|map|exception|xml|xmldocument|json|struct|array)\b
+      scope: storage.type.reference.ballerina
+  all-types:
+    - include: primitive-arrays
+    - include: primitive-types
+    - include: reference-types
+
+  methods:
+    - match: '(?=\w.*\s+)(?=[^=;]+\()'
+      push:
+        - meta_scope: meta.method.ballerina
+        - match: "}|(?=;)"
+          pop: true
+        - include: storage-modifiers
+        - match: (\w+)\s*\(
+          captures:
+            1: entity.name.function.ballerina
+          push:
+            - meta_scope: meta.method.identifier.ballerina
+            - match: \)
+              pop: true
+            - include: parameters
+        - match: (?=\w.*\s+\w+\s*\()
+          push:
+            - meta_scope: meta.method.return-type.ballerina
+            - match: (?=\w+\s*\()
+              pop: true
+            - include: all-types
+        - include: throws
+        - match: "{"
+          push:
+            - meta_scope: meta.method.body.ballerina
+            - match: "(?=})"
+              pop: true
+            - include: code
+  code:
+    - include: comments-inline
+    - include: strings
+    - include: service
+    - include: anonymous-create
+    - include: annotations
+    - include: keywords
+    - include: all-types
+    - include: methods
