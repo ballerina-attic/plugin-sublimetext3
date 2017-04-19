@@ -1,0 +1,20 @@
+{
+  "name": "Ballerina",
+  "version": "0.8.0",
+  "description": "syntax highlighting support for ballerinalang http://ballerinalang.org/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ballerinalang/plugin-sublimetext3.git"
+  },
+  "keywords": [
+    "ballerinalang",
+    "ballerina"
+  ],
+  "author": "WSO2",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ballerinalang/plugin-sublimetext3/issues"
+  },
+  "homepage": "http://ballerinalang.org/",
+  "private": true
+}
