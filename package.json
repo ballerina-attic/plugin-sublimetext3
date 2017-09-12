@@ -1,7 +1,7 @@
 {
   "name": "Ballerina",
   "version": "0.8.0",
-  "description": "syntax highlighting support for ballerinalang http://ballerinalang.org/",
+  "description": "Syntax highlighting support for ballerinalang http://ballerinalang.org/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ballerinalang/plugin-sublimetext3.git"
